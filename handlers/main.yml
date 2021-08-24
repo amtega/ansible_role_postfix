@@ -1,2 +1,10 @@
 ---
 # Role handlers
+
+- name: Postfix reload
+  service:
+    name: postfix
+    state: reloaded
+  listen:
+    - reload main config
+    - reload lookup tables

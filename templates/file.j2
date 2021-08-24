@@ -1,0 +1,7 @@
+#jinja2: lstrip_blocks: True, trim_blocks: True
+#
+# {{ postfix_file.description }}
+#
+{% if postfix_file.content is defined and postfix_file.content %}
+{{ postfix_file.content }}
+{% endif %}

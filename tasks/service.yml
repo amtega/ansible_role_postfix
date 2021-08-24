@@ -1,0 +1,8 @@
+---
+# Role service tasks
+
+- name: Enable and sart postfix daemon service
+  service:
+    name: postfix
+    enabled: no
+    state: started
