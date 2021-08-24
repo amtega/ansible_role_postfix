@@ -1,2 +1,17 @@
 ---
-# Role variables
+# vars file for amtega.postfix
+
+postfix_user: root
+postfix_group: postfix
+postfix_mode: "0640"
+
+postfix_packages:
+  - postfix
+
+postfix_config_dir: /etc/postfix
+
+postfix_local_database_types:
+  - btree
+  - cdb
+  - dbm
+  - hash

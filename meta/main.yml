@@ -1,10 +1,10 @@
 ---
 
 galaxy_info:
-  role_name: role
+  role_name: postfix
   namespace: amtega
-  author: author name
-  description: role description
+  author: ue00258
+  description: postfix smtp server
   company: AMTEGA - Xunta de Galicia
   license: GPLv3 or EUPL
   min_ansible_version: 2.10
