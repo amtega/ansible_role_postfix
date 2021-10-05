@@ -1,0 +1,6 @@
+{% for param in (vars 
+                 | select('match', '^postfix_main_param_') 
+                 | map('regex_replace', '^postfix_main_param_(.*)', '\\1')) %}
+  {{ postfix_main_params.update( {param: vars['postfix_main_param_' ~ param]} ) }}
+{% endfor %}
+{{ postfix_main_params }}

@@ -1,0 +1,16 @@
+{% for param, value in _postfix_main_params.items() %}
+  {% if param is defined and param %}
+  {% set separator = ' = ' %}
+    {% if value is defined and value is iterable and value is not string %}
+      {% for v in value %}
+        {% if loop.first %}
+          {{- param ~ separator ~ v }} 
+        {% else %}
+          {{- v | indent( ( param ~ separator ) | length , true) }} 
+        {% endif %}
+      {% endfor %}
+    {% else %}
+      {{- param ~ separator ~ value }} 
+    {% endif %}
+  {% endif %}
+{% endfor %}
