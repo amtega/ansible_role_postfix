@@ -6,5 +6,6 @@
     name: postfix
     state: reloaded
   listen:
+    - reload postfix
     - reload main config
     - reload lookup tables

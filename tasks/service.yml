@@ -6,3 +6,6 @@
     name: postfix
     enabled: yes
     state: started
+  tags:
+    - role::postfix
+    - role::postfix::service
