@@ -4,4 +4,102 @@
   hosts: molecule_hosts
   gather_facts: no
   tasks:
-#    - debug: msg="Verify to be done"
+
+    - name: Check if deleted files still exist
+      find:
+        paths: "{{ postfix_config_dir }}"
+        patterns: "bogus*"
+      register: find_result
+      changed_when: no
+      failed_when: find_result.matched != 0
+
+    - name: Check for valid postfix banner
+      wait_for:
+        host: 127.0.0.1
+        delay: 1
+        port: 25
+        search_regex: "^220 "
+        timeout: 5
+      register: check_smtp_banner_result
+
+    - name: debug
+      debug:
+        var: check_smtp_banner_result
+
+    - name: Get timestamp
+      set_fact:
+        timestamp: "{{ lookup('pipe','date +%s') }}"
+
+    - name: Send basic mail
+      mail:
+        host: 127.0.0.1
+        port: 25
+        from: "foobar@example.com"
+        to: "user001@example.com"
+        subject: "Basic mail {{ timestamp }}"
+
+    - name: Check basic mail result
+      lineinfile:
+        path: "/var/spool/mail/{{ test_user }}"
+        regexp: '{{ timestamp }}'
+        state: absent
+      check_mode: yes
+      changed_when: no
+      register: mail_result
+      failed_when: not mail_result.found
+
+    - name: Remove mailbox
+      file:
+        path: "/var/spool/mail/{{ test_user }}"
+        state: absent
+      changed_when: no
+
+    - name: Get timestamp
+      set_fact:
+        timestamp: "{{ lookup('pipe','date +%s') }}"
+
+    - name: Send autheticated mail
+      mail:
+        host: 127.0.0.1
+        port: 25
+        from: "foobar@example.com"
+        to: "user001@example.com"
+        subject: "Authenticated mail {{ timestamp }}"
+        username: "{{ test_user }}"
+        password: "{{ test_password }}"
+
+    - name: Check authenticated mail result
+      lineinfile:
+        path: /var/spool/mail/{{ test_user }}
+        regexp: '{{ timestamp }}'
+        state: absent
+      check_mode: yes
+      changed_when: no
+      register: mail_result
+      failed_when: not mail_result.found
+
+    - name: Remove mailbox
+      file:
+        path: /var/spool/mail/{{ test_user }}
+        state: absent
+      changed_when: no
+
+    - name: Get timestamp
+      set_fact:
+        timestamp: "{{ lookup('pipe','date +%s') }}"
+
+    - name: Send external mail with transport rules
+      mail:
+        host: 127.0.0.1
+        port: 25
+        from: "foobar@example.com"
+        to: "user-{{ timestamp }}@example.external"
+        subject: "Basic mail {{ timestamp }}"
+
+    - name: Check external mail with transport rules
+      command: "journalctl --no-pager -u postfix -n 6"
+      register:  journalctl_result
+      changed_when: no
+      failed_when: >-
+        not journalctl_result.stdout | regex_search("discard.*user-"
+                                       ~ timestamp ~ "@.*dsn=2\.")

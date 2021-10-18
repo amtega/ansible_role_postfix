@@ -28,6 +28,8 @@
 # postfix_main_param_myorigin: $mydomain
 #
 # postfix_main_params:
+#   mydomain: example.com
+#   inet_protocols: ipv4
 #   mydestination: 
 #     - $myhostname 
 #     - $mydomain
@@ -38,10 +40,15 @@
 #   mynetworks: 
 #     - 127.0.0.0/8
 #     - 10.0.0.0/24
+#   smtpd_recipient_restrictions:
+#     - permit_mynetworks
+#     - reject
 #
 # result:
 # -------
 #
+# mydomain = example.com
+# inet_protocols = ipv4
 # myorigin = $mydomain
 # mydestination = $myhostname
 #                 $mydomain
@@ -51,6 +58,8 @@
 # relay_domains = 
 # mynetworks = 127.0.0.0/8
 #              10.0.0.0/24
+# smtpd_recipient_restrictions = permit_mynetworks
+#                                reject
 #
 # For more examples look at:
 #
@@ -64,7 +73,7 @@ postfix_main_params: {}
 #
 # postfix_files accepts a list of dicts.
 #
-#  - filename: "ldap_alias.cf"
+#  - file: "{{ postfix_config_dir }}/ldap_alias.cf"
 #    description: "Search ldap alias"
 #    state: "present"
 #    lookup_table: "ldap"
@@ -78,13 +87,17 @@ postfix_main_params: {}
 #      query_filter: (mailAlternateAddress=%s)
 #      search_base: dc=example,dc=com
 #
-#  - filename: "transport"
+#  - file: "{{ postfix_config_dir }}/transport"
 #    description: "Transport rules"
 #    state: "present"
 #    lookup_table: "hash"
 #    content: |-
 #      foobar@example.com  smtp:mx.example.com
 #      spam.com                :discard
+#
+#  - file: "{{ postfix_config_dir }}/internal_hosts"
+#    state: "absent"
+#    lookup_table: "hash"
 #
 # for more options check the *_tables man pages.
 
