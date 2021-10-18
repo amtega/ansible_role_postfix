@@ -12,73 +12,54 @@ driver:
   name: docker
 lint: "${MOLECULE_SCENARIO_DIRECTORY}/linters.sh"
 platforms:
-  - name: "centos6-${INSTANCE_UUID:-1}"
-    image: centos:6
-    dockerfile: Dockerfile.centos6.j2
-    # Only required for systemd enabled containers
-    # dockerfile: Dockerfile.systemd.j2
-    # command: /sbin/init
-    # tmpfs:
-    #   - /run
-    #   - /tmp
-    # volumes:
-    #   - /sys/fs/cgroup:/sys/fs/cgroup:ro
-    groups:
-      - molecule_hosts
-      - molecule_hosts_centos
-      - molecule_hosts_centos_6
   - name: "centos7-${INSTANCE_UUID:-1}"
     image: centos:7
-    # Only required for systemd enabled containers
-    # dockerfile: Dockerfile.systemd.j2
-    # command: /sbin/init
-    # tmpfs:
-    #   - /run
-    #   - /tmp
-    # volumes:
-    #   - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    dockerfile: Dockerfile.systemd.j2
+    command: /sbin/init
+    tmpfs:
+      - /run
+      - /tmp
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
     groups:
       - molecule_hosts
       - molecule_hosts_centos
       - molecule_hosts_centos_7
   - name: "centos8-${INSTANCE_UUID:-1}"
     image: centos:8
-    # Only required for systemd enabled containers
-    # dockerfile: Dockerfile.systemd.j2
-    # command: /sbin/init
-    # tmpfs:
-    #   - /run
-    #   - /tmp
-    # volumes:
-    #   - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    dockerfile: Dockerfile.systemd.j2
+    command: /sbin/init
+    tmpfs:
+      - /run
+      - /tmp
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
     groups:
       - molecule_hosts
       - molecule_hosts_centos
       - molecule_hosts_centos_8
   - name: "fedora33-${INSTANCE_UUID:-1}"
     image: fedora:33
-    # Only required for systemd enabled containers
-    # dockerfile: Dockerfile.systemd.j2
-    # command: /sbin/init
-    # tmpfs:
-    #   - /run
-    #   - /tmp
-    # volumes:
-    #   - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    dockerfile: Dockerfile.systemd.j2
+    command: /sbin/init
+    tmpfs:
+      - /run
+      - /tmp
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
     groups:
       - molecule_hosts
       - molecule_hosts_fedora
       - molecule_hosts_fedora_33
   - name: "fedora34-${INSTANCE_UUID:-1}"
     image: fedora:34
-    # Only required for systemd enabled containers
-    # dockerfile: Dockerfile.systemd.j2
-    # command: /sbin/init
-    # tmpfs:
-    #   - /run
-    #   - /tmp
-    # volumes:
-    #   - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    dockerfile: Dockerfile.systemd.j2
+    command: /sbin/init
+    tmpfs:
+      - /run
+      - /tmp
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
     groups:
       - molecule_hosts
       - molecule_hosts_fedora
@@ -93,6 +74,47 @@ provisioner:
     hosts:
       molecule_hosts:
         vars:
+          postfix_config_dir: "/etc/postfix"
+          test_user: user001
+          test_password: pass001
+          postfix_main_params:
+            mydomain: example.com
+            inet_protocols: ipv4
+            mydestination:
+              - $$myhostname
+              - $$mydomain
+              - localhost.$$mydomain
+              - localhost
+            relayhost: [mail.example.com]
+            relay_domains:
+            mynetworks:
+              - 127.0.0.0/8
+            smtpd_sasl_path: smtpd
+            smtpd_sasl_auth_enable: "yes"
+            smtpd_tls_auth_only: "no"
+            smtpd_recipient_restrictions:
+              - permit_mynetworks
+              - reject
+            transport_maps:
+              - hash:/etc/postfix/transport_test
+            home_mailbox:  "Maildir/"
+          postfix_files:
+            - file:         "/etc/sasl2/smtpd.conf"
+              description:  "Auth backend"
+              state:        "present"
+              content: |-
+                pwcheck_method: saslauthd
+                mech_list: PLAIN LOGIN
+            - file:         "{{ postfix_config_dir }}/transport_test"
+              description:  "Transport rules"
+              state:        "present"
+              lookup_type:  "hash"
+              content: |-
+                example.com     local:
+                *               discard:
+            - file:         "{{ postfix_config_dir }}/bogus_data"
+              state:        "absent"
+              lookup_type:  "hash"
       molecule_hosts_fedora:
         vars:
           ansible_python_interpreter: /usr/bin/python3
