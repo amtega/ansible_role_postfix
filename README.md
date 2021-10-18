@@ -24,6 +24,16 @@ This is an example playbook:
         postfix_main_param_relayhost: "[smtpout.example.com]"
 ```
 
+## Testing
+
+Tests are based on [molecule with docker containers](https://molecule.readthedocs.io/en/latest/installation.html).
+
+```shell
+cd amtega.postfix
+
+molecule test --all
+```
+
 ## License
 
 Copyright (C) 2021 AMTEGA - Xunta de Galicia
