@@ -74,9 +74,10 @@ provisioner:
     hosts:
       molecule_hosts:
         vars:
-          postfix_config_dir: "/etc/postfix"
+          postfix_config_dir: /etc/postfix
           test_user: user001
           test_password: pass001
+          test_user_from: foobar
           postfix_main_params:
             mydomain: example.com
             inet_protocols: ipv4
@@ -97,24 +98,24 @@ provisioner:
               - reject
             transport_maps:
               - hash:/etc/postfix/transport_test
-            home_mailbox:  "Maildir/"
+            home_mailbox: Maildir/
           postfix_files:
-            - file:         "/etc/sasl2/smtpd.conf"
-              description:  "Auth backend"
-              state:        "present"
+            - file: /etc/sasl2/smtpd.conf
+              description: Auth backend
+              state: present
               content: |-
                 pwcheck_method: saslauthd
                 mech_list: PLAIN LOGIN
-            - file:         "{{ postfix_config_dir }}/transport_test"
-              description:  "Transport rules"
-              state:        "present"
-              lookup_type:  "hash"
+            - file: "{{ postfix_config_dir }}/transport_test"
+              description: Transport rules
+              state: present
+              lookup_type: hash
               content: |-
                 example.com     local:
                 *               discard:
-            - file:         "{{ postfix_config_dir }}/bogus_data"
-              state:        "absent"
-              lookup_type:  "hash"
+            - file: "{{ postfix_config_dir }}/bogus_data"
+              state: absent
+              lookup_type: hash
       molecule_hosts_fedora:
         vars:
           ansible_python_interpreter: /usr/bin/python3

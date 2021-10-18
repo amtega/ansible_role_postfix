@@ -1,28 +1,28 @@
 ---
 # Role default lower priority variables
 
-# The parameters of this role admit two syntax. 
+# The parameters of this role admit two syntax.
 #
-# adding the role prefix to each native parameter:
+# The first one works adding the role prefix to each native parameter:
 #
 #   postfix_main_param_<p1>: <v1>
 #   postfix_main_param_<p2>: <v2>
 #
-# or adding the native parameters to a dictionary: 
+# The second one works adding the native parameters to a dictionary:
 #
 #   postfix_main_params:
 #     <p1>: <v1>
 #     <p2>: <v2>
 #
-# if a parameter is present on both sintaxes, the role prefix syntax 
-# takes precedence.
-#            
-# the parameters in this role are not restricted, you can use any of 
-# them and postfix will check the validity of the configuration. 
+# If a parameter is present on both sintaxes, the role prefix syntax takes
+# precedence.
 #
-# see postconf(5) for all possible parameters.
+# The parameters in this role are not restricted, you can use any of them and
+# postfix will check the validity of the configuration.
 #
-# example configuration:
+# See postconf(5) for all possible parameters.
+#
+# Example configuration:
 # ----------------------
 #
 # postfix_main_param_myorigin: $mydomain
@@ -30,14 +30,14 @@
 # postfix_main_params:
 #   mydomain: example.com
 #   inet_protocols: ipv4
-#   mydestination: 
-#     - $myhostname 
+#   mydestination:
+#     - $myhostname
 #     - $mydomain
-#     - localhost.$mydomain 
-#     - localhost 
+#     - localhost.$mydomain
+#     - localhost
 #   relayhost: [mail.example.com]
 #   relay_domains:
-#   mynetworks: 
+#   mynetworks:
 #     - 127.0.0.0/8
 #     - 10.0.0.0/24
 #   smtpd_recipient_restrictions:
@@ -55,7 +55,7 @@
 #                 localhost.$mydomain
 #                 localhost
 # relayhost = [mail.example.com]
-# relay_domains = 
+# relay_domains =
 # mynetworks = 127.0.0.0/8
 #              10.0.0.0/24
 # smtpd_recipient_restrictions = permit_mynetworks
@@ -63,15 +63,15 @@
 #
 # For more examples look at:
 #
-# http://www.postfix.org/BASIC_CONFIGURATION_README.html 
+# http://www.postfix.org/BASIC_CONFIGURATION_README.html
 # http://www.postfix.org/STANDARD_CONFIGURATION_README.html
 
 postfix_main_params: {}
 
-# postfix can use lookup tables for sql queries, ldap queries, 
-# file-based databases, regular expressions and so on. 
+# Postfix can use lookup tables for sql queries, ldap queries, file-based
+# databases, regular expressions and so on.
 #
-# postfix_files accepts a list of dicts.
+# The variable postfix_files accepts a list of dicts.
 #
 #  - file: "{{ postfix_config_dir }}/ldap_alias.cf"
 #    description: "Search ldap alias"
@@ -99,6 +99,6 @@ postfix_main_params: {}
 #    state: "absent"
 #    lookup_table: "hash"
 #
-# for more options check the *_tables man pages.
+# For more options check the *_tables man pages.
 
 postfix_files: []

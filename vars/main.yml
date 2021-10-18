@@ -1,12 +1,9 @@
 ---
-# vars file for amtega.postfix
+# Role variables
 
 postfix_default_owner: root
 postfix_default_group: postfix
 postfix_default_mode: "0640"
-
-postfix_packages:
-  - postfix
 
 postfix_config_dir: /etc/postfix
 
