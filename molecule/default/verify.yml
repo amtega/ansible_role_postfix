@@ -4,11 +4,10 @@
   hosts: molecule_hosts
   gather_facts: no
   tasks:
-
     - name: Check if deleted files still exist
       find:
         paths: "{{ postfix_config_dir }}"
-        patterns: "bogus*"
+        patterns: bogus*
       register: find_result
       changed_when: no
       failed_when: find_result.matched != 0
@@ -22,10 +21,6 @@
         timeout: 5
       register: check_smtp_banner_result
 
-    - name: debug
-      debug:
-        var: check_smtp_banner_result
-
     - name: Get timestamp
       set_fact:
         timestamp: "{{ lookup('pipe','date +%s') }}"
@@ -34,54 +29,58 @@
       mail:
         host: 127.0.0.1
         port: 25
-        from: "foobar@example.com"
-        to: "user001@example.com"
+        from: "{{ test_user_from }}@{{ postfix_main_params.mydomain }}"
+        to: "{{ test_user }}@{{ postfix_main_params.mydomain }}"
         subject: "Basic mail {{ timestamp }}"
 
-    - name: Check basic mail result
-      lineinfile:
-        path: "/var/spool/mail/{{ test_user }}"
-        regexp: '{{ timestamp }}'
-        state: absent
-      check_mode: yes
+    - name: Check basic mail
+      command: journalctl --no-pager -u postfix
+      register:  journalctl_result
       changed_when: no
-      register: mail_result
-      failed_when: not mail_result.found
+      failed_when: >-
+        not journalctl_result.stdout
+            is search("postfix/local.*to=<"
+                      ~ test_user
+                      ~ "@"
+                      ~ postfix_main_params.mydomain
+                      ~ ">.*status=sent.*" )
 
-    - name: Remove mailbox
-      file:
-        path: "/var/spool/mail/{{ test_user }}"
-        state: absent
+    - name: Pause for 1 second
+      pause:
+        seconds: 1
+
+    - name: Cleanup journal
+      command: journalctl --vacuum-time=1seconds
       changed_when: no
-
-    - name: Get timestamp
-      set_fact:
-        timestamp: "{{ lookup('pipe','date +%s') }}"
 
     - name: Send autheticated mail
       mail:
         host: 127.0.0.1
         port: 25
-        from: "foobar@example.com"
-        to: "user001@example.com"
+        from: "{{ test_user_from }}@{{ postfix_main_params.mydomain }}"
+        to: "{{ test_user }}@{{ postfix_main_params.mydomain }}"
         subject: "Authenticated mail {{ timestamp }}"
         username: "{{ test_user }}"
         password: "{{ test_password }}"
 
-    - name: Check authenticated mail result
-      lineinfile:
-        path: /var/spool/mail/{{ test_user }}
-        regexp: '{{ timestamp }}'
-        state: absent
-      check_mode: yes
+    - name: Check autheticated mail
+      command: journalctl --no-pager -u postfix
+      register:  journalctl_result
       changed_when: no
-      register: mail_result
-      failed_when: not mail_result.found
+      failed_when: >-
+        not journalctl_result.stdout
+            is search("postfix/local.*to=<"
+                      ~ test_user
+                      ~ "@"
+                      ~ postfix_main_params.mydomain
+                      ~ ">.*status=sent.*" )
 
-    - name: Remove mailbox
-      file:
-        path: /var/spool/mail/{{ test_user }}
-        state: absent
+    - name: Pause for 1 second
+      pause:
+        seconds: 1
+
+    - name: Cleanup journal
+      command: journalctl --vacuum-time=1seconds
       changed_when: no
 
     - name: Get timestamp
@@ -92,12 +91,12 @@
       mail:
         host: 127.0.0.1
         port: 25
-        from: "foobar@example.com"
+        from: "{{ test_user_from }}@{{ postfix_main_params.mydomain }}"
         to: "user-{{ timestamp }}@example.external"
         subject: "Basic mail {{ timestamp }}"
 
     - name: Check external mail with transport rules
-      command: "journalctl --no-pager -u postfix -n 6"
+      command: journalctl --no-pager -u postfix -n 6
       register:  journalctl_result
       changed_when: no
       failed_when: >-

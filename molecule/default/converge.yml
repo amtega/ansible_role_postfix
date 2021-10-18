@@ -3,6 +3,5 @@
 - name: Converge
   hosts: molecule_hosts
   gather_facts: no
-  become: yes
   roles:
     - amtega.postfix

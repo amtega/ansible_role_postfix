@@ -1,104 +1,110 @@
 ---
 # Role configure tasks
 
-- name: Configure main file
-  ansible.builtin.template:
-    src: main.cf.j2
-    dest: "{{ postfix_config_dir }}/main.cf"
-    lstrip_blocks: "yes"
-    trim_blocks: "yes"
-    owner: "{{ postfix_default_owner }}"
-    group: "{{ postfix_default_group }}"
-    mode: "{{ postfix_default_mode }}"
-  vars:
-    _postfix_main_params: >-
-       {{ lookup('template', 'main_params.j2') | from_yaml }}
-  notify:
-    - reload main config
+- block:
+    - name: Configure main file
+      ansible.builtin.template:
+        src: main.cf.j2
+        dest: "{{ postfix_config_dir }}/main.cf"
+        lstrip_blocks: yes
+        trim_blocks: yes
+        owner: "{{ postfix_default_owner }}"
+        group: "{{ postfix_default_group }}"
+        mode: "{{ postfix_default_mode }}"
+      vars:
+        postfix_main_params_to_setup: >-
+           {{ lookup("template", "main_params.j2") | from_yaml }}
+      notify:
+        - reload main config
 
-- name: Configure support files
-  ansible.builtin.template:
-    src: file.j2
-    dest: "{{ postfix_file.file }}"
-    lstrip_blocks: "yes"
-    trim_blocks: "yes"
-    owner: "{{ postfix_file.owner | d(postfix_default_owner) }}"
-    group: "{{ postfix_file.group | d(postfix_default_group) }}"
-    mode: "{{ postfix_file.mode | d(postfix_default_mode) }}"
-  loop: "{{ postfix_files | list }}"
-  loop_control:
-    loop_var: postfix_file
-    label: "{{ postfix_file.file }}"
-  when:
-    - postfix_file.file is defined
-    - postfix_file.state is defined
-    - postfix_file.state == 'present'
-  register: configure_lookup_tables_result
-  notify:
-    - reload lookup tables
+    - name: Configure support files
+      ansible.builtin.template:
+        src: file.j2
+        dest: "{{ postfix_file.file }}"
+        lstrip_blocks: yes
+        trim_blocks: yes
+        owner: "{{ postfix_file.owner | d(postfix_default_owner) }}"
+        group: "{{ postfix_file.group | d(postfix_default_group) }}"
+        mode: "{{ postfix_file.mode | d(postfix_default_mode) }}"
+      loop: "{{ postfix_files | list }}"
+      loop_control:
+        loop_var: postfix_file
+        label: "{{ postfix_file.file }}"
+      when:
+        - postfix_file.file is defined
+        - postfix_file.state is defined
+        - postfix_file.state == "present"
+      register: configure_lookup_tables_result
+      notify:
+        - reload lookup tables
 
-- name: Remove support files
-  file:
-    path: "{{ postfix_file.file }}"
-    state: absent
-  loop: "{{ postfix_files | list }}"
-  loop_control:
-    loop_var: postfix_file
-    label: "{{ postfix_file.file }}"
-  when:
-    - postfix_file.file is defined
-    - postfix_file.state is defined
-    - postfix_file.state == 'absent'
-  register: remove_lookup_tables_result
-  notify:
-    - reload lookup tables
+    - name: Remove support files
+      file:
+        path: "{{ postfix_file.file }}"
+        state: absent
+      loop: "{{ postfix_files | list }}"
+      loop_control:
+        loop_var: postfix_file
+        label: "{{ postfix_file.file }}"
+      when:
+        - postfix_file.file is defined
+        - postfix_file.state is defined
+        - postfix_file.state == "absent"
+      register: remove_lookup_tables_result
+      notify:
+        - reload lookup tables
 
-- name: Create/rebuild local databases
-  command: >-
-      postmap {{ local_database.postfix_file.lookup_type
-                 ~ ':'
-                 ~ local_database.postfix_file.file
-              }}
-  loop: "{{ _postfix_local_databases }}"
-  loop_control:
-    loop_var: local_database
-    label: >-
-      {{ local_database.postfix_file.lookup_type
-         ~ ':'
-         ~ local_database.postfix_file.file }}
-  changed_when: _postfix_local_databases | length
-  vars:
-    _postfix_local_databases: >-
-      {{ configure_lookup_tables_result.results
-         | select('changed')
-         | selectattr('postfix_file.lookup_type', 'defined')
-         | selectattr('postfix_file.lookup_type',
-                      'in', postfix_local_database_types)
-         | selectattr('postfix_file.state', 'defined')
-         | selectattr('postfix_file.state', 'equalto', 'present')
-         | list }}
+    - name: Create/rebuild local databases
+      command: >-
+          postmap {{ local_database.postfix_file.lookup_type
+                     ~ ':'
+                     ~ local_database.postfix_file.file }}
+      loop: "{{ postfix_local_databases }}"
+      loop_control:
+        loop_var: local_database
+        label: >-
+          {{ local_database.postfix_file.lookup_type
+             ~ ':'
+             ~ local_database.postfix_file.file }}
+      changed_when: postfix_local_databases | length
+      vars:
+        postfix_local_databases: >-
+          {{ configure_lookup_tables_result.results
+             | select("changed")
+             | selectattr("postfix_file.lookup_type", "defined")
+             | selectattr("postfix_file.lookup_type",
+                          "in",
+                          postfix_local_database_types)
+             | selectattr("postfix_file.state", "defined")
+             | selectattr("postfix_file.state", "equalto", "present")
+             | list }}
 
-- name: Remove local databases
-  file:
-    path: "{{ local_database }}"
-    state: absent
-  loop: "{{ _postfix_local_databases }}"
-  loop_control:
-    loop_var: local_database
-    label: "{{ local_database }}"
-  vars:
-    _postfix_local_databases: >-
-      {{ remove_lookup_tables_result.results
-         | select('changed')
-         | selectattr("postfix_file.lookup_type", "defined")
-         | selectattr('postfix_file.lookup_type',
-                      'in', postfix_local_database_types)
-         | map(attribute='postfix_file.file')
-         | map("regex_replace", "^(.*)$", "\1.db")
-         | list }}
+    - name: Remove local databases
+      file:
+        path: "{{ local_database }}"
+        state: absent
+      loop: "{{ postfix_local_databases }}"
+      loop_control:
+        loop_var: local_database
+        label: "{{ local_database }}"
+      vars:
+        postfix_local_databases: >-
+          {{ remove_lookup_tables_result.results
+             | select("changed")
+             | selectattr("postfix_file.lookup_type", "defined")
+             | selectattr("postfix_file.lookup_type",
+                          "in",
+                          postfix_local_database_types)
+             | map(attribute="postfix_file.file")
+             | map("regex_replace", "^(.*)$", "\1.db")
+             | list }}
 
-- name: Validate configuration
-  command: postfix check
-  register: postfix_check_result
-  changed_when: no
-  failed_when:  postfix_check_result.rc != 0
+    - name: Validate configuration
+      command: postfix check
+      register: postfix_check_result
+      changed_when: no
+      failed_when:  postfix_check_result.rc != 0
+
+  tags:
+    - role::posrfix
+    - role::postfix::configure

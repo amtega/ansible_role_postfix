@@ -1,20 +1,14 @@
 ---
 # Role tasks
 
-- name: Install postfix daemon
-  import_tasks: install.yml
-  tags:
-    - role::postfix
-    - role::postfix::install
-
 - name: Configure postfix daemon
-  import_tasks: configure.yml
+  include_tasks: configure.yml
   tags:
     - role::postfix
     - role::postfix::configure
 
 - name: Setup postfix daemon service
-  import_tasks: service.yml
+  include_tasks: service.yml
   tags:
     - role::postfix
     - role::postfix::service

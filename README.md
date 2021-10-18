@@ -1,14 +1,10 @@
 # Ansible postfix role
 
-This is an [Ansible](http://www.ansible.com) role to setup a postfix mail server
+This is an [Ansible](http://www.ansible.com) role to setup a postfix mail server.
 
 ## Role Variables
 
-You can use any postfix variable, see `defaults/mail.yml` for examples 
-
-## Dependencies
-
-None.
+You can use any postfix variable, see `defaults/mail.yml` for examples
 
 ## Usage
 
@@ -40,4 +36,5 @@ This role is distributed in the hope that it will be useful, but WITHOUT ANY WAR
 
 ## Author Information
 
+- José Manuel Fandiño Pita
 - Juan Antonio Valiño García

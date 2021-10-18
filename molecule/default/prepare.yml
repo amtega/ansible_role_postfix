@@ -3,14 +3,12 @@
 - name: Prepare
   hosts: molecule_hosts
   gather_facts: no
-  become: yes
   tasks:
-
     - name: Setup required packages for tests
       package:
         state: present
         name: "{{ pkg_test }}"
-      loop: 
+      loop:
         - cyrus-sasl
         - cyrus-sasl-plain
       loop_control:
@@ -23,7 +21,7 @@
         enabled: yes
         state: started
 
-    - name: create test group
+    - name: Create test group
       group:
         name: users
         state: present
