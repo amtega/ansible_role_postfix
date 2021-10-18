@@ -7,48 +7,46 @@
     dest: "{{ postfix_config_dir }}/main.cf"
     lstrip_blocks: "yes"
     trim_blocks: "yes"
-    owner: "{{ postfix_user }}"
-    group: "{{ postfix_group }}"
-    mode: "{{ postfix_mode }}"
+    owner: "{{ postfix_default_owner }}"
+    group: "{{ postfix_default_group }}"
+    mode: "{{ postfix_default_mode }}"
   vars:
     _postfix_main_params: >-
        {{ lookup('template', 'main_params.j2') | from_yaml }}
   notify:
     - reload main config
 
-- name: Configure lookup tables
+- name: Configure support files
   ansible.builtin.template:
     src: file.j2
-    dest: "{{ postfix_config_dir }}/{{ postfix_file.filename }}"
+    dest: "{{ postfix_file.file }}"
     lstrip_blocks: "yes"
     trim_blocks: "yes"
-    owner: "{{ postfix_user }}"
-    group: "{{ postfix_group }}"
-    mode: "{{ postfix_mode }}"
+    owner: "{{ postfix_file.owner | d(postfix_default_owner) }}"
+    group: "{{ postfix_file.group | d(postfix_default_group) }}"
+    mode: "{{ postfix_file.mode | d(postfix_default_mode) }}"
   loop: "{{ postfix_files | list }}"
   loop_control:
     loop_var: postfix_file
-    label: "{{ postfix_file.filename }}"
+    label: "{{ postfix_file.file }}"
   when:
-    - postfix_file.filename is defined
-    - postfix_file.filename | bool
+    - postfix_file.file is defined
     - postfix_file.state is defined
     - postfix_file.state == 'present'
   register: configure_lookup_tables_result
   notify:
     - reload lookup tables
 
-- name: Remove lookup tables
+- name: Remove support files
   file:
-    path: "{{ postfix_config_dir }}/{{ postfix_file.filename }}"
+    path: "{{ postfix_file.file }}"
     state: absent
   loop: "{{ postfix_files | list }}"
   loop_control:
     loop_var: postfix_file
-    label: "{{ postfix_file.filename }}"
+    label: "{{ postfix_file.file }}"
   when:
-    - postfix_file.filename is defined
-    - postfix_file.filename | bool
+    - postfix_file.file is defined
     - postfix_file.state is defined
     - postfix_file.state == 'absent'
   register: remove_lookup_tables_result
@@ -57,26 +55,32 @@
 
 - name: Create/rebuild local databases
   command: >-
-      postmap {{ local_database.type ~ ':' 
-                 ~ postfix_config_dir ~ '/' 
-                 ~ local_database.filename 
+      postmap {{ local_database.postfix_file.lookup_type
+                 ~ ':'
+                 ~ local_database.postfix_file.file
               }}
   loop: "{{ _postfix_local_databases }}"
   loop_control:
     loop_var: local_database
-    label: "{{ local_database.type ~ ':' ~ local_database.filename }}"
-  changed_when: no
+    label: >-
+      {{ local_database.postfix_file.lookup_type
+         ~ ':'
+         ~ local_database.postfix_file.file }}
+  changed_when: _postfix_local_databases | length
   vars:
     _postfix_local_databases: >-
       {{ configure_lookup_tables_result.results
-         | json_query('[? changed==`true` 
-                       && postfix_file.state==`present`].{
-                            filename: postfix_file.filename, 
-                            type: postfix_file.lookup_type}') }}
+         | select('changed')
+         | selectattr('postfix_file.lookup_type', 'defined')
+         | selectattr('postfix_file.lookup_type',
+                      'in', postfix_local_database_types)
+         | selectattr('postfix_file.state', 'defined')
+         | selectattr('postfix_file.state', 'equalto', 'present')
+         | list }}
 
 - name: Remove local databases
   file:
-    path: "{{ postfix_config_dir }}/{{ local_database }}"
+    path: "{{ local_database }}"
     state: absent
   loop: "{{ _postfix_local_databases }}"
   loop_control:
@@ -87,9 +91,9 @@
       {{ remove_lookup_tables_result.results
          | select('changed')
          | selectattr("postfix_file.lookup_type", "defined")
-         | selectattr('postfix_file.lookup_type', 
+         | selectattr('postfix_file.lookup_type',
                       'in', postfix_local_database_types)
-         | map(attribute='postfix_file.filename')
+         | map(attribute='postfix_file.file')
          | map("regex_replace", "^(.*)$", "\1.db")
          | list }}
 

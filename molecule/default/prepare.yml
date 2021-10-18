@@ -3,3 +3,50 @@
 - name: Prepare
   hosts: molecule_hosts
   gather_facts: no
+  become: yes
+  tasks:
+
+    - name: Setup required packages for tests
+      package:
+        state: present
+        name: "{{ pkg_test }}"
+      loop: 
+        - cyrus-sasl
+        - cyrus-sasl-plain
+      loop_control:
+        loop_var: pkg_test
+        label: "{{ pkg_test }}"
+
+    - name: Start saslauthd
+      systemd:
+        name: saslauthd
+        enabled: yes
+        state: started
+
+    - name: create test group
+      group:
+        name: users
+        state: present
+
+    - name: Create test user
+      user:
+        name: "{{ test_user }}"
+        password: "{{ test_password | password_hash('sha512') }}"
+        create_home: yes
+        state: present
+        group: users
+
+    - name: Create postfix directory
+      file:
+        path: "{{ postfix_config_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Create bogus data files
+      file:
+        path: "{{ postfix_config_dir }}/{{ item }}"
+        state: touch
+        mode: "0644"
+      loop:
+        - bogus_data
+        - bogus_data.db

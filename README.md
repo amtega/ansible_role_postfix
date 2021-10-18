@@ -19,7 +19,7 @@ This is an example playbook:
 
 - hosts: all
   roles:
-    - role: amtega.dovecot
+    - role: amtega.postfix
       vars:
         postfix_main_param_mydomain: example.com
         postfix_main_param_mynetworks:
