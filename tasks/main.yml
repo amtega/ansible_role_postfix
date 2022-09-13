@@ -1,5 +1,4 @@
 ---
-# Role tasks
 
 - name: Configure postfix daemon
   include_tasks: configure.yml
