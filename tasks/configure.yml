@@ -1,7 +1,7 @@
 ---
-# Role configure tasks
 
-- block:
+- name: Configure postfix
+  block:
     - name: Configure main file
       ansible.builtin.template:
         src: main.cf.j2
@@ -39,7 +39,7 @@
         - reload lookup tables
 
     - name: Remove support files
-      file:
+      ansible.builtin.file:
         path: "{{ postfix_file.file }}"
         state: absent
       loop: "{{ postfix_files | list }}"
@@ -55,7 +55,7 @@
         - reload lookup tables
 
     - name: Create/rebuild local databases
-      command: >-
+      ansible.builtin.command: >-
           postmap {{ local_database.postfix_file.lookup_type
                      ~ ':'
                      ~ local_database.postfix_file.file }}
@@ -80,7 +80,7 @@
              | list }}
 
     - name: Remove local databases
-      file:
+      ansible.builtin.file:
         path: "{{ local_database }}"
         state: absent
       loop: "{{ postfix_local_databases }}"
@@ -100,7 +100,7 @@
              | list }}
 
     - name: Validate configuration
-      command: postfix check
+      ansible.builtin.command: postfix check
       register: postfix_check_result
       changed_when: no
       failed_when:  postfix_check_result.rc != 0

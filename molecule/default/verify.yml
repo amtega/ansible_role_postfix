@@ -5,7 +5,7 @@
   gather_facts: no
   tasks:
     - name: Check if deleted files still exist
-      find:
+      ansible.builtin.find:
         paths: "{{ postfix_config_dir }}"
         patterns: bogus*
       register: find_result
@@ -13,7 +13,7 @@
       failed_when: find_result.matched != 0
 
     - name: Check for valid postfix banner
-      wait_for:
+      ansible.builtin.wait_for:
         host: 127.0.0.1
         delay: 1
         port: 25
@@ -21,8 +21,8 @@
         timeout: 5
       register: check_smtp_banner_result
 
-    - name: Get timestamp
-      set_fact:
+    - name: Get timestamp  # noqa jinja[spacing]
+      ansible.builtin.set_fact:
         timestamp: "{{ lookup('pipe','date +%s') }}"
 
     - name: Send basic mail
@@ -34,7 +34,7 @@
         subject: "Basic mail {{ timestamp }}"
 
     - name: Check basic mail
-      command: journalctl --no-pager -u postfix
+      ansible.builtin.command: journalctl --no-pager -u postfix
       register:  journalctl_result
       changed_when: no
       failed_when: >-
@@ -46,11 +46,11 @@
                       ~ ">.*status=sent.*" )
 
     - name: Pause for 1 second
-      pause:
+      ansible.builtin.pause:
         seconds: 1
 
     - name: Cleanup journal
-      command: journalctl --vacuum-time=1seconds
+      ansible.builtin.command: journalctl --vacuum-time=1seconds
       changed_when: no
 
     - name: Send autheticated mail
@@ -64,7 +64,7 @@
         password: "{{ test_password }}"
 
     - name: Check autheticated mail
-      command: journalctl --no-pager -u postfix
+      ansible.builtin.command: journalctl --no-pager -u postfix
       register:  journalctl_result
       changed_when: no
       failed_when: >-
@@ -76,15 +76,15 @@
                       ~ ">.*status=sent.*" )
 
     - name: Pause for 1 second
-      pause:
+      ansible.builtin.pause:
         seconds: 1
 
     - name: Cleanup journal
-      command: journalctl --vacuum-time=1seconds
+      ansible.builtin.command: journalctl --vacuum-time=1seconds
       changed_when: no
 
-    - name: Get timestamp
-      set_fact:
+    - name: Get timestamp  # noqa jinja[spacing]
+      ansible.builtin.set_fact:
         timestamp: "{{ lookup('pipe','date +%s') }}"
 
     - name: Send external mail with transport rules
@@ -96,7 +96,7 @@
         subject: "Basic mail {{ timestamp }}"
 
     - name: Check external mail with transport rules
-      command: journalctl --no-pager -u postfix -n 6
+      ansible.builtin.command: journalctl --no-pager -u postfix -n 6
       register:  journalctl_result
       changed_when: no
       failed_when: >-

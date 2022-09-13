@@ -2,7 +2,7 @@
 # Role handlers
 
 - name: Postfix reload
-  service:
+  ansible.builtin.service:
     name: postfix
     state: reloaded
   listen:

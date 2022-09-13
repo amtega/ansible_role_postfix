@@ -1,8 +1,7 @@
 ---
-# Role service tasks
 
 - name: Enable and start postfix daemon service
-  service:
+  ansible.builtin.service:
     name: postfix
     enabled: yes
     state: started

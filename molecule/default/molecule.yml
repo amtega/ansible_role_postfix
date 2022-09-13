@@ -9,7 +9,7 @@ dependency:
     role-file: "${MOLECULE_SCENARIO_DIRECTORY}/requirements.yml"
     requirements-file: "${MOLECULE_SCENARIO_DIRECTORY}/requirements.yml"
 driver:
-  name: docker
+  name: podman
 lint: "${MOLECULE_SCENARIO_DIRECTORY}/linters.sh"
 platforms:
   - name: "centos7-${INSTANCE_UUID:-1}"
@@ -76,7 +76,7 @@ provisioner:
         vars:
           postfix_config_dir: /etc/postfix
           test_user: user001
-          test_password: pass001
+          test_password: pass001    # pragma: allowlist secret
           test_user_from: foobar
           postfix_main_params:
             mydomain: example.com
