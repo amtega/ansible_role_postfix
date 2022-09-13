@@ -76,7 +76,7 @@ provisioner:
         vars:
           postfix_config_dir: /etc/postfix
           test_user: user001
-          test_password: pass001
+          test_password: pass001    # pragma: allowlist secret
           test_user_from: foobar
           postfix_main_params:
             mydomain: example.com
