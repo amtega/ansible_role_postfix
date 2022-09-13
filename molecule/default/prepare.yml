@@ -5,7 +5,7 @@
   gather_facts: no
   tasks:
     - name: Setup required packages for tests
-      package:
+      ansible.builtin.package:
         state: present
         name: "{{ pkg_test }}"
       loop:
@@ -16,18 +16,18 @@
         label: "{{ pkg_test }}"
 
     - name: Start saslauthd
-      systemd:
+      ansible.builtin.systemd:
         name: saslauthd
         enabled: yes
         state: started
 
     - name: Create test group
-      group:
+      ansible.builtin.group:
         name: users
         state: present
 
     - name: Create test user
-      user:
+      ansible.builtin.user:
         name: "{{ test_user }}"
         password: "{{ test_password | password_hash('sha512') }}"
         create_home: yes
@@ -35,13 +35,13 @@
         group: users
 
     - name: Create postfix directory
-      file:
+      ansible.builtin.file:
         path: "{{ postfix_config_dir }}"
         state: directory
         mode: "0755"
 
     - name: Create bogus data files
-      file:
+      ansible.builtin.file:
         path: "{{ postfix_config_dir }}/{{ item }}"
         state: touch
         mode: "0644"
